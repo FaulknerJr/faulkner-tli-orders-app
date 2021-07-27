@@ -49,10 +49,10 @@ public class OrderServiceTest {
 	private LineItemRepo lineItemRepo;
 	
 	@Captor
-	private ArgumentCaptor<LineItem> lineItemCaptor = ArgumentCaptor.forClass(LineItem.class);
+	private ArgumentCaptor<LineItem> lineItemCaptor;
 	
 	@Captor
-	private ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
+	private ArgumentCaptor<Order> orderCaptor;
 	
 	@InjectMocks
 	private OrderServiceImpl orderService;
@@ -168,6 +168,8 @@ public class OrderServiceTest {
 	@Test
 	public void testChangeQuantity() throws JSONException {
 		
+		lineItemCaptor = ArgumentCaptor.forClass(LineItem.class);
+
 		int number = 8923;
 		int quantity = 8;
 		int statusId = 1;
@@ -232,6 +234,9 @@ public class OrderServiceTest {
 	@Test
 	public void testCreateOrder() throws Exception {
 		
+		orderCaptor = ArgumentCaptor.forClass(Order.class);
+		
+		lineItemCaptor = ArgumentCaptor.forClass(LineItem.class);
 		Status mockedStatus = mockedStatus(1, "New");
 		
 		List<LineItemDTO> itemsDTO = new ArrayList<>();
