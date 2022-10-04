@@ -1,12 +1,9 @@
 package com.tli.orders.services;
 
-import java.math.BigDecimal;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +14,10 @@ import com.tli.orders.DTO.LineItemDTO;
 import com.tli.orders.DTO.OrderDTO;
 import com.tli.orders.entities.LineItem;
 import com.tli.orders.entities.Order;
-import com.tli.orders.entities.Status;
+import com.tli.orders.enums.Status;
 import com.tli.orders.repo.LineItemRepo;
 import com.tli.orders.repo.OrderRepo;
-import com.tli.orders.repo.StatusRepo;
+import com.tli.orders.utils.StatusUtils;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -34,11 +31,11 @@ public class OrderServiceImpl implements OrderService {
 	private LineItemRepo lineItemRepo;
 	
 	@Autowired
-	private StatusRepo statusRepo;
+	private LineItemService lineItemService;
 
 	/**
 	 * Grabs order with the given id. Started out assuming the id would always be an
-	 * integer but if we want to change it to something with a UUID later it will be
+	 * long but if we want to change it to something with a UUID later it will be
 	 * an easy change.
 	 * 
 	 * parameter {@link String} returns {@link JSONObject}
@@ -46,35 +43,26 @@ public class OrderServiceImpl implements OrderService {
 	 * throws {@link NumberFormatException}
 	 */
 	@Override
-	public String viewOrder(String orderId) throws NumberFormatException {
+	public OrderDTO viewOrder(String orderId) throws NumberFormatException {
 
 		if (StringUtils.isNotBlank(orderId)) {
 			try {
-				Order toReturn = orderRepo.findById(Integer.parseInt(orderId));
-				if(toReturn == null) {
-					JSONObject orderNotFound = new JSONObject();
-					orderNotFound.put("orderId", orderId);
-					orderNotFound.put("message", "orderNotFound");
-					return orderNotFound.toString();
-				}
-				List<LineItem> itemsList= lineItemRepo.findByOrderId(toReturn.getId());
-				
-				JSONArray itemsToAdd = new JSONArray();
-				for(LineItem li : itemsList) {
-					itemsToAdd.put(new JSONObject(li.getPertinentData()));
+				Order matchingOrder = orderRepo.findById(Integer.parseInt(orderId));
+				if(matchingOrder == null) {
+					return new OrderDTO(Long.parseLong(orderId));
 				}
 				
-				JSONObject builtOrder = new JSONObject(toReturn.getPertinentDate());
-				builtOrder.put("items", itemsToAdd);
-				
-				return builtOrder.toString();
+				OrderDTO returnMe = new OrderDTO(matchingOrder);			
+				returnMe.setLineItems(lineItemService.getLineItems(Long.parseLong(orderId)));
+
+				return returnMe;
 			} catch (NumberFormatException e) {
 				LOGGER.error("Failed to find order for {}. As this is not a number. Please try again.", orderId);
 			}
 		}
 		return null;
 	}
-
+	
 	/**
 	 * Creates an order based on the body of request. If the order can't be created for whatever reason
 	 * 	false will be returned and an internal server error will be the response.
@@ -84,30 +72,32 @@ public class OrderServiceImpl implements OrderService {
 	 * 
 	 * 
 	 * parameter {@link OrderDTO}
-	 * return {@link boolean} returns false if there are duplicate line item numbers.
+	 * return {@link OrderDTO}
 	 */
 	@Override
-	public String createOrder(OrderDTO saveMe) {
+	public OrderDTO createOrder(OrderDTO saveMe) {
 
+		LOGGER.info("Order info received. Attempting to create new order");
+		
 		Order newOrder = new Order();
 		newOrder.setCreatedDate(new Date());
 		newOrder.setStatusId(1);
-		newOrder.setCreatedBy(0); //This would be the userId
-		newOrder.setModifiedBy(0); //This would be the userId
+		newOrder.setCreatedBy(0); 
+		newOrder.setModifiedBy(0); 
 		newOrder.setModifiedDate(new Date());
 		
 		newOrder = orderRepo.save(newOrder);
+		
+		saveMe.setCreatedDate(newOrder.getCreatedDate());
 		
 		LineItem newItem = new LineItem();
 
 		List<LineItemDTO> ja = saveMe.getLineItems();
 		
-		JSONArray savedItems = new JSONArray();
-		
 		int itemNum = 1;
 		for(LineItemDTO item : ja) {
 			newItem.setName(item.getName());
-			newItem.setPrice(item.getPrice() < 0 ? new BigDecimal(0) : new BigDecimal(item.getPrice()));
+			newItem.setPrice(item.getPrice() < 0 ? 0 : item.getPrice());
 			newItem.setQuantity(item.getQuantity() == 0 ? 1 : item.getQuantity());
 			newItem.setOrderId(newOrder.getId());			
 			newItem.setNumber(itemNum++);
@@ -115,90 +105,19 @@ public class OrderServiceImpl implements OrderService {
 			newItem.setCreatedBy(0);
 			newItem.setCreatedDate(new Date());
 			newItem.setModifiedDate(new Date());
-			
-			//You can save all of them together as a single list so you don't have too many transaction calls.
-			//I think you'd have to just create a save(List<ListItem>) in the repo class and it will do it for you.
-			//Leaving like this for now.
+
 			LineItem saved = lineItemRepo.save(newItem);
 			
-			
-			JSONObject addToList = new JSONObject(saved.getPertinentData());
-			savedItems.put(addToList);
+			item.setOrderId(saved.getOrderId());
+			item.setNumber(saved.getNumber());
+
 		}
 		
-		JSONObject orderInfo = new JSONObject();
-		orderInfo.put("id", newOrder.getId());
-		orderInfo.put("status", statusRepo.findById(newOrder.getStatusId()).getName());
-		orderInfo.put("lineItems", savedItems);
-		
-		return orderInfo.toString();
-	}
+		saveMe.setId(newOrder.getId());
+		saveMe.setStatus(Status.getStatus(newOrder.getStatusId()).name());
+		LOGGER.info("Order info saved. Returning saved data.");
 
-	/**
-	 * Removes the requested line item from an order.
-	 * Line Items can not be removed if the order is In Transit or Delivered.
-	 * 
-	 * todo: move this over to another service revolving around lineItems
-	 * 
-	 * parameters {@link LineItemDTO}
-	 * returns boolean true if removed false if not(for whatever reason)
-	 */
-	@Override
-	public boolean removeItem(LineItemDTO lineItemDTO) {
-
-		Order associatedOrder = orderRepo.findById(lineItemDTO.getOrderId());
-		if(associatedOrder == null || !isOrderAvailable(associatedOrder.getStatusId())) {
-			return false;
-		}
-		
-		Integer removed = lineItemRepo.deleteByOrderIdAndNumber(lineItemDTO.getOrderId(), lineItemDTO.getNumber());
-				
-		return removed != null && removed.intValue() > 0;
-	}
-
-	private boolean isOrderAvailable(int statusId) {
-		Status currentOrderStatus = statusRepo.findById(statusId);
-		
-		if(StringUtils.equalsIgnoreCase("in transit", currentOrderStatus.getName()) || StringUtils.equalsIgnoreCase("delivered", currentOrderStatus.getName())) {
-			return false;
-		}
-		
-		return true;
-	}
-
-	/**
-	 * 
-	 * Changes the Quantity of items to be shipped on a line item.
-	 * Line Items can not be modified if the order is In Transit or Delivered.
-	 * 
-	 * todo: move this over to another service revolving around lineItems
-	 * 
-	 * parameters {@link LineItemDTO}
-	 * returns {@link JSONObject} of the line item. Check to see if the quantity changed 
-	 * 		update user and let them know if it has changed
-	 * 
-	 * Returns null if there were no lineItems with the orderId and number sent over.
-	 * 
-	 */
-	@Override
-	public JSONObject changeQuantity(LineItemDTO lineItemDTO) {
-
-		LineItem li = lineItemRepo.findByOrderIdAndNumber(lineItemDTO.getOrderId(), lineItemDTO.getNumber());
-		
-		Order associatedOrder = orderRepo.findById(lineItemDTO.getOrderId());
-		
-		if(associatedOrder == null || !isOrderAvailable(associatedOrder.getStatusId())) {
-			//if order isn't available
-			return null;
-		}
-		
-		if(li != null) {
-			li.setQuantity(lineItemDTO.getQuantity());
-			li = lineItemRepo.save(li);
-			return new JSONObject(li.getPertinentData());
-		}
-		
-		return null;
+		return saveMe;
 	}
 
 	/**
@@ -213,16 +132,17 @@ public class OrderServiceImpl implements OrderService {
 
 		Order associatedOrder = orderRepo.findById(orderDTO.getId());
 		
-		if(associatedOrder == null || !isOrderAvailable(associatedOrder.getStatusId())) {
+		if(associatedOrder == null || !StatusUtils.isOrderAvailable(Status.getStatus(associatedOrder.getStatusId()))) {
 			//order not cancelled if not found, is in transit or delivered.
 			return false;
 		}
-				
-		lineItemRepo.deleteByOrderId(associatedOrder.getId());
+		
+		lineItemService.cancellingOrder(associatedOrder.getId());
 		orderRepo.delete(associatedOrder);
 		
 		orderRepo.flush();
 		
 		return orderRepo.findById(orderDTO.getId()) == null;
 	}
+	
 }

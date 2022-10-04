@@ -5,6 +5,8 @@ import java.util.List;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.tli.orders.entities.Order;
+import com.tli.orders.enums.Status;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -16,8 +18,8 @@ public class OrderDTO {
 	@JsonProperty("id")
 	private long id;
 
-	@JsonProperty("statusId")
-	private int statusId;
+	@JsonProperty("status")
+	private String status;
 
 	@JsonProperty("createdDate")
 	private Date createdDate;
@@ -25,8 +27,24 @@ public class OrderDTO {
 	@JsonProperty("items")
 	private List<LineItemDTO> lineItems;
 	
+	private String message;
+	
+	
+
 	public OrderDTO() {
 		super();
+	}
+	
+	public OrderDTO(Order order) {
+		super();
+		this.id = order.getId();
+		this.status = Status.getStatus(order.getStatusId()).name();
+		this.createdDate = order.getCreatedDate();
+	}
+	
+	public OrderDTO(long id) {
+		super();
+		this.id = id;
 	}
 	
 	public OrderDTO(long id, List<LineItemDTO> lineItems) {
@@ -51,12 +69,20 @@ public class OrderDTO {
 		this.id = id;
 	}
 
-	public int getStatusId() {
-		return statusId;
+	public String getMessage() {
+		return message;
 	}
 
-	public void setStatusId(int statusId) {
-		this.statusId = statusId;
+	public void setMessage(String message) {
+		this.message = message;
+	}
+	
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String statusId) {
+		this.status = statusId;
 	}
 
 	public Date getCreatedDate() {
@@ -67,6 +93,4 @@ public class OrderDTO {
 		this.createdDate = createdDate;
 	}
 	
-	
-
 }

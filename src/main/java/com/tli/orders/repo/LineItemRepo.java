@@ -21,5 +21,5 @@ public interface LineItemRepo extends JpaRepository<LineItem, Long> {
 
 	@Transactional
 	void deleteByOrderId(long orderId);
-
+	
 }

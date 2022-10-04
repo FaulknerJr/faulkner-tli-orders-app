@@ -1,11 +1,12 @@
 package com.tli.orders.DTO;
 
 import com.google.gson.GsonBuilder;
+import com.tli.orders.entities.LineItem;
 
 public class LineItemDTO {
 
 	private String name;
-	
+
 	private long number;
 
 	private long orderId;
@@ -14,12 +15,22 @@ public class LineItemDTO {
 
 	private double price;
 
+	public LineItemDTO(LineItem item) {
+		if (item != null) {
+			this.name = item.getName();
+			this.number = item.getNumber();
+			this.orderId = item.getOrderId();
+			this.quantity = item.getQuantity();
+			this.price = item.getPrice();
+		}
+	}
+
 	public LineItemDTO(String name, int quantity, double price) {
 		this.name = name;
 		this.quantity = quantity;
 		this.price = price;
 	}
-	
+
 	public LineItemDTO() {
 		super();
 	}
