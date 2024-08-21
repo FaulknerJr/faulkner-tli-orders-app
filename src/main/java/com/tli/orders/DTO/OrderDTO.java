@@ -19,7 +19,7 @@ public class OrderDTO {
 	private long id;
 
 	@JsonProperty("status")
-	private String status;
+	private Status status;
 
 	@JsonProperty("createdDate")
 	private Date createdDate;
@@ -38,7 +38,7 @@ public class OrderDTO {
 	public OrderDTO(Order order) {
 		super();
 		this.id = order.getId();
-		this.status = Status.getStatus(order.getStatusId()).name();
+		this.status = order.getStatus();
 		this.createdDate = order.getCreatedDate();
 	}
 	
@@ -77,11 +77,11 @@ public class OrderDTO {
 		this.message = message;
 	}
 	
-	public String getStatus() {
+	public Status getStatus() {
 		return status;
 	}
 
-	public void setStatus(String statusId) {
+	public void setStatus(Status statusId) {
 		this.status = statusId;
 	}
 

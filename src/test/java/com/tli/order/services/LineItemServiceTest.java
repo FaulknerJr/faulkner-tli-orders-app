@@ -17,61 +17,59 @@ import com.tli.order.TestUtils;
 import com.tli.orders.DTO.LineItemDTO;
 import com.tli.orders.entities.LineItem;
 import com.tli.orders.entities.Order;
+import com.tli.orders.enums.Status;
 import com.tli.orders.repo.LineItemRepo;
 import com.tli.orders.repo.OrderRepo;
 import com.tli.orders.services.LineItemService;
 
+
 public class LineItemServiceTest {
 
-//	@Mock
-//	private LineItemRepo lineItemRepo;
-//
-//	@Mock
-//	private StatusService statusService;
+	@Mock
+	private LineItemRepo lineItemRepo;
+	
+	@Mock
+	private OrderRepo orderRepo;
+	
+	
+	@InjectMocks
+	private LineItemService lineItemService;
 //	
-//	@Mock
-//	private OrderRepo orderRepo;
-//	
-//	
-//	@InjectMocks
-//	private LineItemService lineItemService;
-//	
-//	@Test
-//	public void testChangeQuantity() throws JSONException {
-//		
-//		lineItemCaptor = ArgumentCaptor.forClass(LineItem.class);
-//
-//		int number = 8923;
-//		int quantity = 8;
-//		int statusId = 1;
-//		
-//		Status mockedStatus = TestUtils.mockedStatus(statusId, "New");
-//		Order mockedOrder = TestUtils.mockedOrder(orderId, 1);
-//		LineItem mockedLineItem = mockedLineItem(orderId, number, quantity);
-//		
-//		LineItemDTO dto = new LineItemDTO();
-//		
-//		dto.setOrderId(orderId);
-//		dto.setNumber(number);
-//		dto.setQuantiy(3);
-//		
-//		when(lineItemRepo.findByOrderIdAndNumber(orderId, number)).thenReturn(mockedLineItem);
-//		when(orderRepo.findById(orderId)).thenReturn(mockedOrder);
-//		when(statusRepo.findById(statusId)).thenReturn(mockedStatus);
-//		when(lineItemRepo.save(Mockito.isA(LineItem.class))).then(i -> i.getArgument(0));
-//		
-//		assertEquals(3, lineItemService.changeQuantity(dto).getInt("quantity"));
-//		
-//		verify(lineItemRepo).save(lineItemCaptor.capture());
-//		verify(orderRepo).findById(orderId);
-//		verify(statusRepo).findById(statusId);
-//		verify(lineItemRepo).findByOrderIdAndNumber(orderId, number);
-//		
-//		assertEquals(3, lineItemCaptor.getValue().getQuantity());
-//		
-//		TestUtils.verifyNoMoreInteractionsForAllMocks(this);
-//		
-//	}
+	@Test
+	public void testChangeQuantity() throws JSONException {
+		
+		ArgumentCaptor<LineItem> lineItemCaptor = ArgumentCaptor.forClass(LineItem.class);
+
+		int number = 8923;
+		int quantity = 8;
+		Status mockedStatus = Status.NEW;
+		int orderId = 43985;
+		
+		Order mockedOrder = TestUtils.mockedOrder(orderId, mockedStatus);
+		LineItem mockedLineItem = TestUtils.mockedLineItem(orderId, number, quantity);
+		
+		LineItemDTO dto = new LineItemDTO();
+		
+		dto.setOrderId(orderId);
+		dto.setNumber(number);
+		dto.setQuantiy(3);
+		
+		when(lineItemRepo.findByOrderIdAndNumber(orderId, number)).thenReturn(mockedLineItem);
+		when(orderRepo.findById(orderId)).thenReturn(mockedOrder);
+		when(lineItemRepo.save(Mockito.isA(LineItem.class))).then(i -> i.getArgument(0));
+		
+		assertEquals(3, lineItemService.changeQuantity(dto).getQuantity());
+		
+		verify(lineItemRepo).save(lineItemCaptor.capture());
+		verify(orderRepo).findById(orderId);
+		assertEquals(mockedStatus, mockedOrder.getStatus());
+		verify(lineItemRepo).findByOrderIdAndNumber(orderId, number);
+		
+		assertEquals(3, lineItemCaptor.getValue().getQuantity());
+		
+		TestUtils.verifyNoMoreInteractionsForAllMocks(this);
+		
+	}
 //	
 //	@Test
 //	public void testChangeQuantityNotAvailable() throws Exception {

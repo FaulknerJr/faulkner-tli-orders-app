@@ -2,6 +2,7 @@ package com.tli.orders.entities;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
+import com.tli.orders.enums.Status;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -28,7 +29,7 @@ public class Order implements Serializable{
 
 	@NotNull
 	@Expose
-	private int statusId;
+	private Status status;
 
 	@NotNull
 	@Column(name = "created_date")
@@ -66,12 +67,12 @@ public class Order implements Serializable{
 		this.createdDate = date;
 	}
 	
-	public int getStatusId() {
-		return statusId;
+	public Status getStatus() {
+		return status;
 	}
 
-	public void setStatusId(int statusId) {
-		this.statusId = statusId;
+	public void setStatus(Status status) {
+		this.status = status;
 	}
 
 	public Date getModifiedDate() {

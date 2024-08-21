@@ -10,16 +10,17 @@ import org.mockito.Mock;
 
 import com.tli.orders.entities.LineItem;
 import com.tli.orders.entities.Order;
+import com.tli.orders.enums.Status;
 
 public class TestUtils {
 
-	public static Order mockedOrder(int orderId, int statusId) {
+	public static Order mockedOrder(int orderId, Status status) {
 		
 		Order mockOrder = new Order();
 		
 		mockOrder.setId(orderId);
 		mockOrder.setCreatedDate(new Date());
-		mockOrder.setStatusId(statusId);
+		mockOrder.setStatus(status);
 		
 		return mockOrder;
 	}
