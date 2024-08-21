@@ -56,7 +56,6 @@ public class OrderServiceTest {
 	
 	private static final int orderId = 421523;
 	
-
 	@Test
 	public void testFindByIdFails() throws JSONException {
 		
@@ -78,7 +77,7 @@ public class OrderServiceTest {
 		
 		String requestId = "12345";
 		
-		when(orderRepo.findById(12345)).thenReturn(TestUtils.mockedOrder(12345, 1));
+		when(orderRepo.findById(12345)).thenReturn(TestUtils.mockedOrder(12345, Status.NEW));
 		
 		OrderDTO result = orderService.viewOrder(requestId);
 		
@@ -93,7 +92,7 @@ public class OrderServiceTest {
 	@Test
 	public void testCancelOrderSuccess() {
 		
-		Order mockedOrder = TestUtils.mockedOrder(orderId, 1);
+		Order mockedOrder = TestUtils.mockedOrder(orderId, Status.NEW);
 		
 		OrderDTO dto = new OrderDTO();
 		dto.setId(orderId);
@@ -113,7 +112,7 @@ public class OrderServiceTest {
 	@Test
 	public void testCancelOrderFails() {
 		
-		Order mockedOrder = TestUtils.mockedOrder(orderId, 4);
+		Order mockedOrder = TestUtils.mockedOrder(orderId, Status.IN_TRANSIT);
 		
 		OrderDTO dto = new OrderDTO();
 		dto.setId(orderId);

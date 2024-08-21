@@ -81,7 +81,7 @@ public class OrderServiceImpl implements OrderService {
 		
 		Order newOrder = new Order();
 		newOrder.setCreatedDate(new Date());
-		newOrder.setStatusId(1);
+		newOrder.setStatus(Status.NEW);
 		newOrder.setCreatedBy(0); 
 		newOrder.setModifiedBy(0); 
 		newOrder.setModifiedDate(new Date());
@@ -114,7 +114,7 @@ public class OrderServiceImpl implements OrderService {
 		}
 		
 		saveMe.setId(newOrder.getId());
-		saveMe.setStatus(Status.getStatus(newOrder.getStatusId()).name());
+		saveMe.setStatus(newOrder.getStatus());
 		LOGGER.info("Order info saved. Returning saved data.");
 
 		return saveMe;
@@ -132,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
 
 		Order associatedOrder = orderRepo.findById(orderDTO.getId());
 		
-		if(associatedOrder == null || !StatusUtils.isOrderAvailable(Status.getStatus(associatedOrder.getStatusId()))) {
+		if(associatedOrder == null || !StatusUtils.isOrderAvailable(associatedOrder.getStatus())) {
 			//order not cancelled if not found, is in transit or delivered.
 			return false;
 		}

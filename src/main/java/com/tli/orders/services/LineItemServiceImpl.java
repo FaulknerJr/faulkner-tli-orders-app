@@ -45,7 +45,7 @@ public class LineItemServiceImpl implements LineItemService {
 
 		OrderDTO associatedOrder = orderService.viewOrder(lineItemDTO.getOrderId() + "");
 		
-		if(associatedOrder == null || !StatusUtils.isOrderAvailable(Status.valueOf(Status.class, associatedOrder.getStatus()))) {
+		if(associatedOrder == null || !StatusUtils.isOrderAvailable( associatedOrder.getStatus())) {
 			// if order isn't available
 			return new LineItemDTO(li);
 		}
@@ -73,7 +73,7 @@ public class LineItemServiceImpl implements LineItemService {
 	public OrderDTO removeItem(LineItemDTO lineItemDTO) {
 
 		OrderDTO associatedOrder = orderService.viewOrder(lineItemDTO.getOrderId() + "");
-		if(associatedOrder == null || !StatusUtils.isOrderAvailable(Status.valueOf(Status.class, associatedOrder.getStatus()))) {
+		if(associatedOrder == null || !StatusUtils.isOrderAvailable( associatedOrder.getStatus())) {
 			return associatedOrder;
 		}
 		
